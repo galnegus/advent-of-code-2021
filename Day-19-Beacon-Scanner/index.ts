@@ -4,8 +4,8 @@ const input: string[] = require('fs')
   .split(/\r?\n/)
   .filter(Boolean);
 
-type Beacon = [number, number, number];
-type Scanner = Beacon[];
+type Vector3 = [number, number, number];
+type Scanner = Vector3[];
 type RotationAxis = 'x' | '-x' | 'y' | '-y' | 'z' | '-z';
 type Rotation = [RotationAxis, RotationAxis, RotationAxis];
 
@@ -43,7 +43,7 @@ const rotations: Rotation[] = [
   ['-z', '-x', 'y'], // rotate 270* around z-axis
 ]
 
-function getValueOfAxis([x, y, z]: Beacon, rotationAxis: RotationAxis): number {
+function getValueOfAxis([x, y, z]: Vector3, rotationAxis: RotationAxis): number {
   switch (rotationAxis) {
     case 'x': return x;
     case '-x': return -x;
@@ -55,8 +55,8 @@ function getValueOfAxis([x, y, z]: Beacon, rotationAxis: RotationAxis): number {
   return Infinity;
 }
 
-function rotateBeacon(beacon: Beacon, rotation: Rotation): Beacon {
-  const newBeacon = rotation.map((rotationAxis) => getValueOfAxis(beacon, rotationAxis)) as Beacon;
+function rotateBeacon(beacon: Vector3, rotation: Rotation): Vector3 {
+  const newBeacon = rotation.map((rotationAxis) => getValueOfAxis(beacon, rotationAxis)) as Vector3;
   return newBeacon;
 }
 
@@ -72,32 +72,32 @@ function parseScanners(inputStrings: string[]): Scanner[] {
       currentScanner = [];
       scanners.push(currentScanner);
     } else {
-      currentScanner.push(line.split(',').map(Number) as Beacon);
+      currentScanner.push(line.split(',').map(Number) as Vector3);
     }
   }
   return scanners;
 }
 
-function getBeaconString([x, y, z]: Beacon): string {
+function getBeaconString([x, y, z]: Vector3): string {
   return `${x},${y},${z}`;
 }
 
 /**
  * a - b
  */
-function subtract([x0, y0, z0]: Beacon, [x1, y1, z1]: Beacon): Beacon {
+function subtract([x0, y0, z0]: Vector3, [x1, y1, z1]: Vector3): Vector3 {
   return [x0 - x1, y0 - y1, z0 - z1];
 }
 
 /**
  * a + b
  */
-function add([x0, y0, z0]: Beacon, [x1, y1, z1]: Beacon): Beacon {
+function add([x0, y0, z0]: Vector3, [x1, y1, z1]: Vector3): Vector3 {
   return [x0 + x1, y0 + y1, z0 + z1];
 }
 
 
-function manhattanDistance([x0, y0, z0]: Beacon, [x1, y1, z1]: Beacon): number {
+function manhattanDistance([x0, y0, z0]: Vector3, [x1, y1, z1]: Vector3): number {
   return Math.abs(x0 - x1) + Math.abs(y0 - y1) + Math.abs(z0 - z1);
 }
 
@@ -119,7 +119,7 @@ function findOverlap(
   otherScanner: Scanner,
 ): {
   scanner: Scanner,
-  scannerPosition: Beacon,
+  scannerPosition: Vector3,
 } | null {
   for (const absoluteBeacon of absoluteScanner) {
     for (const otherBeacon of otherScanner) {
@@ -175,7 +175,7 @@ const rotatedScanners: Map<Rotation, Scanner>[] = scanners
   )
 );
 
-const scannerPositions: Beacon[] = [[0, 0, 0]]; // [0, 0, 0] is the position of scanners[0]
+const scannerPositions: Vector3[] = [[0, 0, 0]]; // [0, 0, 0] is the position of scanners[0]
 
 /**
  * This is here for optimization, adding this it went from taking ~9 minutes to taking 10 seconds (on repl.it)
@@ -190,7 +190,6 @@ while (absoluteScanners.length > 0) {
     if (absoluteScannerIndices.has(i)) continue;
     // (12 * 12 / 2) since that's how many similarities there will be (at least) for 12 common beacons
     if (signatureSimilarities(absoluteScannerSignature, scannerSignatures[i]) < (12 * 12 / 2)) continue;
-    const scannerCandidate = scanners[i];
     for (const rotation of rotations) {
       const rotatedCandidate = rotatedScanners[i].get(rotation) as Scanner;
       const overlapData = findOverlap(absoluteScanner, absoluteScannerStringSet, rotatedCandidate);
