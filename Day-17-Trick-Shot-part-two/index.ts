@@ -75,28 +75,6 @@ function solveMaxPosition(velocity: number): number {
   return velocity * (velocity + 1) / 2;
 }
 
-function yIsInInterval(y: number, yInterval: Interval): boolean {
-  const stepsAtMin = solveYSteps(y, yInterval.min);
-  const stepsAtMax = solveYSteps(y, yInterval.max);
-  return Math.floor(stepsAtMin) !== Math.floor(stepsAtMax) || Number.isInteger(stepsAtMin) || Number.isInteger(stepsAtMax);
-}
-
-function xIsInInterval(x: number, xInterval: Interval): boolean {
-  const stepsAtMin = solveYSteps(x, xInterval.min);
-  const stepsAtMax = solveYSteps(x, xInterval.max);
-  const maxPosition = solveMaxPosition(x);
-  return (maxPosition >= xInterval.min && Math.floor(stepsAtMin) !== Math.floor(stepsAtMax))
-    || (maxPosition >= xInterval.min && maxPosition <= xInterval.max);
-}
-
-function getXMaxPositionStart(x: number, xInterval: Interval): number {
-  const maxPosition = solveMaxPosition(x);
-  if (maxPosition >= xInterval.min && maxPosition <= xInterval.max)
-    return maxPosition;
-  else
-    return -1;
-}
-
 function getXCandidates(x: number, xInterval: Interval, maxedXCandidates: Candidate[]): Candidate[] {
   const candidates: Candidate[] = [];
   const stepsAtMin = solveXSteps(x, xInterval.min);
@@ -144,8 +122,6 @@ function getYCandidates(y: number, xInterval: Interval): Candidate[] {
 const xCandidates = new Map<number, Candidate[]>();
 let maxedXCandidates: Candidate[] = [];
 const yCandidates = new Map<number, Candidate[]>();
-const xStepsSet = new Set<number>();
-const yStepsSet = new Set<number>();
 for (let x = 0; x <= targetArea.x.max; ++x) {
   for (const candidate of getXCandidates(x, targetArea.x, maxedXCandidates)) {
     const stepCandidates = xCandidates.get(candidate.steps) ?? [];
@@ -158,9 +134,6 @@ for (let y = targetArea.y.min; y <= Math.abs(targetArea.y.min); ++y) {
     yCandidates.set(candidate.steps, [...stepCandidates, candidate]);
   }
 }
-//console.log(maxedXCandidates);
-//console.log(xCandidates);
-//console.log(yCandidates);
 
 let xyCombinations = 0;
 const meetsCritera: string[] = [];
@@ -184,6 +157,5 @@ for (const stepsToCheck of yCandidates.keys()) {
 //console.log(meetsCritera);
 //console.log(xyCombinations);
 console.log((new Set<string>(meetsCritera)).size);
-console.log('end');
 
 export {}
