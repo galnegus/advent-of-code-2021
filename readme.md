@@ -16,6 +16,12 @@ Just need to be able to run typescript programs.
 ```bash
 npm install -g ts-node typescript '@types/node'
 ```
+
+Some days might have extra packages, just run
+```bash
+npm install
+```
+in their folder if they do.
     
 ## Usage/Examples
 
