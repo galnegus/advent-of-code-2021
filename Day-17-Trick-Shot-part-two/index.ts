@@ -67,14 +67,6 @@ function getXStep(x: number, step: number): number {
   return (x + 1) - step;
 }
 
-/**
- * Same for x and y
- */
-function solveMaxPosition(velocity: number): number {
-  // https://www.wolframalpha.com/input/?i=%28n+%2B+1%29+*+n+-+n%28n%2B1%29%2F2
-  return velocity * (velocity + 1) / 2;
-}
-
 function getXCandidates(x: number, xInterval: Interval, maxedXCandidates: Candidate[]): Candidate[] {
   const candidates: Candidate[] = [];
   const stepsAtMin = solveXSteps(x, xInterval.min);
