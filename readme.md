@@ -11,22 +11,20 @@ Typescript, Node
 
 ## Installation
 
-Just need to be able to run typescript programs.
+Just need to be able to run typescript programs. Should be able to just open a file in vs code and then use the `ts-node` launcher to run each file.
 
-```bash
-npm install -g ts-node typescript '@types/node'
-```
-
-Some days might have extra packages, just run
 ```bash
 npm install
 ```
-in their folder if they do.
+
+To run from terminal it might be needed to globally install ts-node (not sure). If it doesn't work without it, run the below command:
+```bash
+npm install -g ts-node typescript '@types/node'
+```
     
 ## Usage/Examples
 
 ```shell
-cd Day-16-Packet-Decoder
-ts-node index.ts
+ts-node Day-16-Packet-Decoder
 ```
 
