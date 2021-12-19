@@ -1,4 +1,4 @@
-const input: string[] = require('fs').readFileSync('input', 'utf-8')
+const input: string[] = require('fs').readFileSync(require("path").resolve(__dirname, 'input'), 'utf-8')
   .split(/\r?\n/)
   .filter(Boolean);
 let template: string = input[0];
@@ -40,7 +40,7 @@ function applyRules(template: string, rules: Map<string, string>): string {
   return newTemplate;
 }
 
-for (let i = 0; i < 40; ++i) {
+for (let i = 0; i < 10; ++i) {
   template = applyRules(template, rules);
 }
 
@@ -53,3 +53,5 @@ for (let i = 0; i < template.length; ++i) {
 const charFrequencies: [string, number][] = [...charFrequencyMap.entries()];
 charFrequencies.sort((a, b) => b[1] - a[1]);
 console.log(charFrequencies[0][1] - charFrequencies[charFrequencies.length - 1][1]);
+
+export {}

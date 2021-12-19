@@ -1,6 +1,6 @@
 const fs = require('fs');
 
-const input: string[] = fs.readFileSync('freqtest', 'utf-8')
+const input: string[] = fs.readFileSync(require("path").resolve(__dirname, 'input'), 'utf-8')
   .split(/\r?\n/)
   .filter(Boolean);
 
@@ -174,11 +174,11 @@ function digitCharSumFrequencies(patterns: string[], charFrequencies: Map<string
   const sums = patterns.map((pattern) =>
     pattern
       .split('')
-      .map((char) => charFrequencies.get(char))
-      .reduce((acc, curr) => acc + curr, 0);
+      .map((char) => charFrequencies.get(char) as number)
+      .reduce((acc, curr) => acc + curr, 0)
   )
   for (let i = 0; i < patterns.length; ++i) {
-    const pattern = pattern[i];
+    const pattern = patterns[i];
     const freqSum = sums[i];
     res.set(pattern, freqSum);
   }
@@ -192,5 +192,7 @@ function partTwoShort(): void {
 }
 
 //partOne();
-//partTwo();
-partTwoShort();
+partTwo();
+//partTwoShort();
+
+export {}

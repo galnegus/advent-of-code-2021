@@ -1,6 +1,6 @@
 console.time("Execution time")
 const input: string[] = require('fs')
-  .readFileSync('input', 'utf-8')
+  .readFileSync(require("path").resolve(__dirname, 'input'), 'utf-8')
   .split(/\r?\n/)
   .filter(Boolean);
 
@@ -220,3 +220,5 @@ for (const a of scannerPositions) {
 console.log('beacons:', absoluteBeaconStrings.size);
 console.log('max manhattan distance:', maxManhattanDistance);
 console.timeEnd("Execution time");
+
+export {}

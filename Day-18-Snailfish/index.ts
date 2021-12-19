@@ -12,7 +12,7 @@ function parse(snailfishNumberString: string): SnailfishNumber {
 }
 
 const input: SnailfishNumber[] = require('fs')
-  .readFileSync('input', 'utf-8')
+  .readFileSync(require("path").resolve(__dirname, 'input'), 'utf-8')
   .split(/\r?\n/)
   .filter(Boolean)
   .map(parse);
@@ -231,3 +231,5 @@ function partTwo(): void {
 //testsPartOne();
 //partOne();
 partTwo();
+
+export {}

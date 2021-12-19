@@ -1,4 +1,4 @@
-const input: string[] = require('fs').readFileSync('input', 'utf-8')
+const input: string[] = require('fs').readFileSync(require("path").resolve(__dirname, 'input'), 'utf-8')
   .split(/\r?\n/)
   .filter(Boolean);
 
@@ -185,3 +185,5 @@ for (const stepsToCheck of yCandidates.keys()) {
 //console.log(xyCombinations);
 console.log((new Set<string>(meetsCritera)).size);
 console.log('end');
+
+export {}

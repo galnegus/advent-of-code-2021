@@ -13,7 +13,7 @@ interface FoldInstruction {
   foldPosition: number;
 }
 
-const input: string[] = fs.readFileSync('input', 'utf-8')
+const input: string[] = fs.readFileSync(require("path").resolve(__dirname, 'input'), 'utf-8')
   .split(/\r?\n/)
   .filter(Boolean);
 const positions: Position[] = input
@@ -125,3 +125,5 @@ for (const foldInstruction of foldInstructions) {
 }
 
 print(foldedPaper);
+
+export {}

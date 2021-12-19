@@ -1,6 +1,6 @@
 const fs = require('fs');
 
-const input: string[] = fs.readFileSync('input', 'utf-8')
+const input: string[] = fs.readFileSync(require("path").resolve(__dirname, 'input'), 'utf-8')
   .split(/\r?\n/)
   .map((str: string) => parseInt(str));
 
@@ -12,3 +12,4 @@ for (let i = 1; i < input.length; ++i) {
 
 console.log(largerMeasurements);
 
+export {}

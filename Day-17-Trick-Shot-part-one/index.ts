@@ -1,4 +1,4 @@
-const input: string[] = require('fs').readFileSync('input', 'utf-8')
+const input: string[] = require('fs').readFileSync(require("path").resolve(__dirname, 'input'), 'utf-8')
   .split(/\r?\n/)
   .filter(Boolean);
 
@@ -165,3 +165,5 @@ for (const yCandidate of yCandidates.reverse()) {
   }
 }
 console.log('end');
+
+export {}

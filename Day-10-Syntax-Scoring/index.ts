@@ -1,6 +1,6 @@
 const fs = require('fs');
 
-const input: string[] = fs.readFileSync('input', 'utf-8')
+const input: string[] = fs.readFileSync(require("path").resolve(__dirname, 'input'), 'utf-8')
   .split(/\r?\n/)
   .filter(Boolean);
 
@@ -83,3 +83,5 @@ function partTwo(): void {
 }
 
 partTwo();
+
+export {}
