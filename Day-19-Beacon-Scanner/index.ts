@@ -209,7 +209,6 @@ while (absoluteScanners.length > 0) {
 let maxManhattanDistance = -Infinity;
 for (const a of scannerPositions) {
   for (const b of scannerPositions) {
-    //const manhattanDistance = Math.abs(x0 - x1) + Math.abs(y0 - y1) + Math.abs(z0 - z1);
     const distance = manhattanDistance(a, b);
     if (distance > maxManhattanDistance)
       maxManhattanDistance = distance;
