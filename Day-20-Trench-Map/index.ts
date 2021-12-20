@@ -40,13 +40,13 @@ function getPaddedImage(image: string[], padder: Padder): string[] {
 }
 
 function convolve(paddedImage: string[], x: number, y: number): string {
-  const enchancementString =
+  const enhancementString =
     paddedImage[y - 1].slice(x - 1, x + 2) +
     paddedImage[y].slice(x - 1, x + 2) +
     paddedImage[y + 1].slice(x - 1, x + 2);
-  const enchancementIndexBits = enchancementString.replace(/\./g, '0').replace(/#/g, '1')
-  const enchancementIndex = parseInt(enchancementIndexBits, 2);
-  return imageEnhancementAlgorithm[enchancementIndex];
+  const enhancementIndexBits = enhancementString.replace(/\./g, '0').replace(/#/g, '1')
+  const enhancementIndex = parseInt(enhancementIndexBits, 2);
+  return imageEnhancementAlgorithm[enhancementIndex];
 }
 
 function iterate(image: string[], padder: Padder = '.'): string[] {
