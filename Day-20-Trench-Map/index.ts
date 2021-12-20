@@ -4,9 +4,11 @@ const input: string[] = require('fs')
   .split(/\r?\n/)
   .filter(Boolean);
 
+type Padder = '.' | '#';
+
 const imageEnhancementAlgorithm = input[0];
 const inputImage = input.slice(1);
-const padBy = 2;
+const nPads = 2; // should be 2, works with bigger number too, it's just slower
 
 function printImage(image: string[]): void {
   let output = '';
@@ -16,24 +18,24 @@ function printImage(image: string[]): void {
   console.log(output);
 }
 
-function getEmptyPaddedRow(paddedWidth: number, padWith: string): string {
-  return padWith.repeat(paddedWidth);
+function getEmptyPaddedRow(paddedWidth: number, padder: Padder): string {
+  return padder.repeat(paddedWidth);
 }
 
-function getNEmptyPaddedRows(n: number, paddedWidth: number, padWith: string): string[] {
-  return (new Array(n)).fill(undefined).map(() => getEmptyPaddedRow(paddedWidth, padWith));
+function getNEmptyPaddedRows(n: number, paddedWidth: number, padder: Padder): string[] {
+  return (new Array(n)).fill(undefined).map(() => getEmptyPaddedRow(paddedWidth, padder));
 }
 
-function getPaddedRow(row: string, leftPadding: number, rightPadding: number, padWith: string): string {
-  return padWith.repeat(leftPadding) + row + padWith.repeat(rightPadding);
+function getPaddedRow(row: string, leftPadding: number, rightPadding: number, padder: Padder): string {
+  return padder.repeat(leftPadding) + row + padder.repeat(rightPadding);
 }
 
-function getPaddedImage(image: string[], padWith: string): string[] {
-  const paddedWidth = image[0].length + padBy * 2;
+function getPaddedImage(image: string[], padder: Padder): string[] {
+  const paddedWidth = image[0].length + nPads * 2;
   return [
-    ...getNEmptyPaddedRows(padBy, paddedWidth, padWith),
-    ...image.map((row) => getPaddedRow(row, padBy, padBy, padWith)),
-    ...getNEmptyPaddedRows(padBy, paddedWidth, padWith),
+    ...getNEmptyPaddedRows(nPads, paddedWidth, padder),
+    ...image.map((row) => getPaddedRow(row, nPads, nPads, padder)),
+    ...getNEmptyPaddedRows(nPads, paddedWidth, padder),
   ];
 }
 
@@ -47,10 +49,10 @@ function convolve(paddedImage: string[], x: number, y: number): string {
   return imageEnhancementAlgorithm[enchancementIndex];
 }
 
-function iterate(image: string[], padWith = '.'): string[] {
-  const paddedImage = getPaddedImage(image, padWith);
+function iterate(image: string[], padder: Padder = '.'): string[] {
+  const paddedImage = getPaddedImage(image, padder);
   let newImage: string[] = [];
-  // create new image with dimension [1, paddedImageSideLength - 1) in either dimension assuming padBy >= 2
+  // create new image with size [1, paddedImageSideLength - 2] in either dimension assuming nPads >= 2
   for (let y = 1; y < paddedImage.length - 1; ++y) {
     let row = '';
     for (let x = 1; x < paddedImage[y].length - 1; ++x) {
@@ -61,12 +63,15 @@ function iterate(image: string[], padWith = '.'): string[] {
   return newImage;
 }
 
+function getNextPadder(previousPadder: Padder): Padder {
+  if (previousPadder === '#') return imageEnhancementAlgorithm[511] as Padder;
+  else return imageEnhancementAlgorithm[0] as Padder;
+}
+
 function iterateNTimes(image: string[], n: number): string[] {
-  const alternateInfinity = imageEnhancementAlgorithm[0] === '#';
-  const padWithList = (new Array(n))
-    .fill(undefined)
-    .map((_, i) => (i % 2 === 1) && alternateInfinity ? '#' : '.');
-  return padWithList.reduce((previousImage, padWith) => iterate(previousImage, padWith), image);
+  const padderList: Padder[] = (new Array(n - 1)).fill(undefined)
+    .reduce<Padder[]>((padders) => [...padders, getNextPadder(padders[padders.length - 1])], ['.']);
+  return padderList.reduce((previousImage, padder) => iterate(previousImage, padder), image);
 }
 
 function getNumberOfLitPixels(image: string[]): number {
