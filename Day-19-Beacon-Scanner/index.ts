@@ -188,8 +188,8 @@ while (absoluteScanners.length > 0) {
   const absoluteScannerSignature = getScannerSignature(absoluteScanner);
   for (let i = 0; i < scanners.length; ++i) {
     if (absoluteScannerIndices.has(i)) continue;
-    // (12 * 12 / 2) since that's how many similarities there will be (at least) for 12 common beacons
-    if (signatureSimilarities(absoluteScannerSignature, scannerSignatures[i]) < (12 * 12 / 2)) continue;
+    // 1 + 2 + 3 ... + 11 + 12 = (12 * 13 / 2) since that's how many similarities there will be (at least) for 12 common beacons
+    if (signatureSimilarities(absoluteScannerSignature, scannerSignatures[i]) < (12 * 13 / 2)) continue;
     for (const rotation of rotations) {
       const rotatedCandidate = rotatedScanners[i].get(rotation) as Scanner;
       const overlapData = findOverlap(absoluteScanner, absoluteScannerStringSet, rotatedCandidate);
