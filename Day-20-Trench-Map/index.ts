@@ -89,3 +89,5 @@ const finalImage = iterateNTimes(inputImage, 50);
 console.log(getNumberOfLitPixels(finalImage));
 
 console.timeEnd("Execution time");
+
+export { }
