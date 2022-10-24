@@ -4,7 +4,7 @@ import Long = require("long");
 
 console.time("Execution time");
 const input: string[] = require("fs")
-  .readFileSync(require("path").resolve(__dirname, "input"), "utf-8")
+  .readFileSync(require("path").resolve(__dirname, "input-part-two"), "utf-8")
   .split(/\r?\n/)
   .filter(Boolean);
 
@@ -21,13 +21,13 @@ interface Amphipod {
   x: number;
   y: number;
   posHash: number;
-  isInGoal: boolean;
 }
 
 interface MapState {
   amphipods: Map<number, Amphipod>;
   energy: number;
   steps: number;
+  energyToHome?: number;
 }
 
 const amphipodTypeColumn: Record<string, number> = {
@@ -67,6 +67,8 @@ const amphipodBitValue: Record<string, number> = {
   C: 3,
   D: 4,
 };
+
+const hallwayPositions: Array<number> = [1, 2, 4, 6, 8, 10, 11];
 
 const bitMap: Array<Array<number>> = new Array(20)
   .fill(undefined)
@@ -175,18 +177,17 @@ function parseInitialMapState(): MapState {
     steps: 0,
   };
 
-  for (const [type, column] of Object.entries(amphipodTypeColumn)) {
-    let isInGoal = true;
-    for (let row = input.length - 2; row > 1; --row) {
-      const char = input[row][column];
-      if (char !== type) isInGoal = false;
-      const posHash = getPosHash(column, row);
+  for (let x = 0; x < map.length; ++x) {
+    for (let y = 0; y < map[0].length; ++y) {
+      if (map[x][y] == null) continue;
+      const char = input[y][x];
+      if (char === ".") continue;
+      const posHash = getPosHash(x, y);
       const amphipod: Amphipod = {
-        x: column,
-        y: row,
+        x,
+        y,
         posHash,
         type: char,
-        isInGoal,
       };
       mapState.amphipods.set(posHash, amphipod);
     }
@@ -207,7 +208,7 @@ function moveAmphipod(
     energy: mapState.energy + amphipodTypeCost[movedAmphipod.type] * steps,
     steps: mapState.steps + steps,
   };
-  newMapState.amphipods.delete(getPosHash(amphipod.x, amphipod.y));
+  newMapState.amphipods.delete(amphipod.posHash);
   movedAmphipod.x = to[0];
   movedAmphipod.y = to[1];
   movedAmphipod.posHash = getPosHash(to[0], to[1]);
@@ -230,10 +231,28 @@ function homeColumnCanBeVisited(
 }
 
 function canAmphipodGoHome(mapState: MapState, amphipod: Amphipod): boolean {
-  return amphipodTypeColumns[amphipod.type]
-    .map((mapNode) => mapState.amphipods.get(mapNode.posHash))
-    .filter(Boolean)
-    .every((columnAmphipod) => columnAmphipod?.type === amphipod.type);
+    for (const mapNode of amphipodTypeColumns[amphipod.type]) {
+      const columnAmphipod = mapState.amphipods.get(mapNode.posHash);
+      if (!columnAmphipod) continue;
+      if (columnAmphipod.type !== amphipod.type) return false;
+    }
+    return true;
+}
+
+function canAmphipodReachHome(mapState: MapState, amphipod: Amphipod): boolean {
+  if (homeColumns.has(amphipod.x)) return true; // skip if in a column already
+  const columnPosition = amphipodTypeColumn[amphipod.type];
+  for (const hallwayPosition of hallwayPositions) {
+    if (
+      (hallwayPosition > amphipod.x && hallwayPosition < columnPosition) ||
+      (hallwayPosition > columnPosition && hallwayPosition < amphipod.x)
+    ) {
+      if (mapState.amphipods.has(map[hallwayPosition][1]?.posHash as number)) {
+        return false;
+      }
+    }
+  }
+  return true;
 }
 
 interface TempMove {
@@ -251,44 +270,39 @@ function getAmphipodMoves(mapState: MapState, amphipod: Amphipod): MapState[] {
   const stack: Array<[MapNode, number]> = [
     [map[amphipod.x][amphipod.y] as MapNode, 0],
   ];
-  /* const visited: Array<Array<boolean>> = new Array(20)
-    .fill(undefined)
-    .map(() => new Array(20).fill(false));
-  visited[amphipod.x][amphipod.y] = true; */
   const visited = new Set<number>([amphipod.posHash]);
   while (stack.length > 0) {
     const [mapNode, distance] = stack.pop() as [MapNode, number];
-    mapNode.neighbors
-      .map<[MapNode, number]>((neighbor, index) => [
-        neighbor,
-        mapNode.neighborDistance[index],
-      ])
-      .filter(
-        ([neighbor]) =>
-          // Can't be already visited
-          //!visited[neighbor.x][neighbor.y] &&
-          !visited.has(neighbor.posHash) &&
-          // Can't be other amphipods
-          !mapState.amphipods.has(neighbor.posHash) &&
-          // Can't go to wrong column, or correct column occupied by other amphipod types
-          homeColumnCanBeVisited(mapState, amphipod, neighbor.x)
-      )
-      .forEach(([neighbor, neighborDistance]) => {
-        // Can't go from hallway to hallway
-        if (amphipod.y !== 1 || neighbor.y !== 1) {
-          moves.push({
-            x: neighbor.x,
-            y: neighbor.y,
-            distance: distance + neighborDistance,
-          });
-        }
-        stack.push([neighbor, distance + neighborDistance]);
-        visited.add(neighbor.posHash);
-        //visited[neighbor.x][neighbor.y] = true;
-      });
+    for (let index = 0; index < mapNode.neighbors.length; ++index) {
+      const neighbor = mapNode.neighbors[index];
+      const neighborDistance = mapNode.neighborDistance[index];
+
+      if (
+        // Can't be already visited
+        visited.has(neighbor.posHash) ||
+        // Can't be other amphipods
+        mapState.amphipods.has(neighbor.posHash) ||
+        // Can't go to wrong column, or correct column occupied by other amphipod types
+        !homeColumnCanBeVisited(mapState, amphipod, neighbor.x)
+      ) {
+        continue;
+      }
+
+      // Can't go from hallway to hallway OR stop inside the column (on the way to the hallway)
+      if ((amphipod.y !== 1 || neighbor.y !== 1)) {
+        moves.push({
+          x: neighbor.x,
+          y: neighbor.y,
+          distance: distance + neighborDistance,
+        });
+      }
+
+      stack.push([neighbor, distance + neighborDistance]);
+      visited.add(neighbor.posHash);
+    }
   }
   // if one of the moves is to the home column, only use that move
-  if (moves.some((move) => move.x === amphipodTypeColumn[amphipod.type])) {
+  if (moves.some((move) => move.x === amphipodTypeColumn[amphipod.type]) && canAmphipodGoHome(mapState, amphipod)) {
     const homeMoves = moves.filter(
       (move) => move.x === amphipodTypeColumn[amphipod.type]
     );
@@ -303,14 +317,20 @@ function getAmphipodMoves(mapState: MapState, amphipod: Amphipod): MapState[] {
     ];
   }
 
-  return moves.map((move) =>
-    moveAmphipod(
+  const result: MapState[] = [];
+  for (const move of moves) {
+    if (move.x === amphipod.x) {
+      continue;
+    }
+    result.push(moveAmphipod(
       mapState,
       amphipod,
       [move.x, move.y],
       move.distance
-    )
-  );
+    ));
+  }
+
+  return result;
 }
 
 function getAllAmphipodMoves(mapState: MapState): MapState[] {
@@ -318,6 +338,8 @@ function getAllAmphipodMoves(mapState: MapState): MapState[] {
   for (const amphipod of mapState.amphipods.values()) {
     // They're in hallway and their home column is not a valid move target
     if (!homeColumns.has(amphipod.x) && !canAmphipodGoHome(mapState, amphipod))
+      continue;
+    if (!canAmphipodReachHome(mapState, amphipod))
       continue;
     
     moves.push(...getAmphipodMoves(mapState, amphipod));
@@ -332,15 +354,80 @@ function isOrganized(mapState: MapState): boolean {
   return true;
 }
 
+function printState(mapState: MapState): void {
+  const { amphipods } = mapState;
+  let output = "#############\n#";
+  for (let i = 1; i <= 11; ++i) {
+    const posHash = getPosHash(i, 1);
+    if (amphipods.has(posHash)) {
+      output += amphipods.get(posHash)?.type;
+    } else {
+      output += ".";
+    }
+  }
+  output += "#\n###";
+  const rows = amphipods.size / 4;
+  for (let row = 0; row < rows; ++row) {
+    for (let i = 3; i <= 9; ++i) {
+      const posHash = getPosHash(i, row + 2);
+      if (i % 2 === 0) {
+        output += "#";
+      } else if (amphipods.has(posHash)) {
+        output += amphipods.get(posHash)?.type;
+      } else {
+        output += ".";
+      }
+    }
+    if (row === 0) {
+      output += "###\n  #"
+    } else {
+      output += "#\n  #";
+    }
+  }
+  output += "########";
+  mutateEnergyToHome(mapState);
+
+  console.log(output);
+  console.log("Energy to home:", mapState.energyToHome);
+}
+
+/**
+ * Mutate mapState object, adding the "energyToHome" prop. Call this with MapState before adding it to heap.
+ */
+function mutateEnergyToHome(mapState: MapState): void {
+  let energyToHome = 0;
+  for (const amphipod of mapState.amphipods.values()) {
+    const xDistance = Math.abs(amphipod.x - amphipodTypeColumn[amphipod.type]);
+    if (xDistance === 0 && canAmphipodGoHome(mapState, amphipod)) {
+        continue;
+    }
+    energyToHome += (xDistance + Math.abs(1 - amphipod.y)) * amphipodTypeCost[amphipod.type];
+  }
+  mapState.energyToHome = energyToHome;
+}
+
 parseMap();
 const initialMapState = parseInitialMapState();
-const heap = new Heap<MapState>((a, b) => a.energy - b.energy);
-heap.push(initialMapState);
-const visited = new Map<string, number>([[getMapStateHash(initialMapState), initialMapState.energy]]);
+mutateEnergyToHome(initialMapState);
 
+//const heap = new Heap<MapState>((a, b) => (a.energy ?? 0) - (b.energy ?? 0));
+//const heap = new Heap<MapState>((a, b) => (a.energyToHome ?? 0) - (b.energyToHome ?? 0));
+const heap = new Heap<MapState>((a, b) => (a.energy + (a.energyToHome ?? 0)) - (b.energy + (b.energyToHome ?? 0)));
+heap.push(initialMapState);
+const visited = new Map<string, MapState>([
+  [getMapStateHash(initialMapState), initialMapState],
+]);
+
+let states = 0;
 while (heap.size() > 0) {
+  states++;
   const mapState = heap.pop() as MapState;
-  //console.log(getMapStateHash(mapState));
+
+  // same state might show up multiple times since we add it again if it has lower energy than previously, skip then
+  if ((visited.get(getMapStateHash(mapState))?.energy as number) < mapState.energy) {
+    continue;
+  }
+
   if (isOrganized(mapState)) {
     console.log('Solution energy:', mapState.energy);
     break;
@@ -349,17 +436,20 @@ while (heap.size() > 0) {
   for (const nextMapState of nextMapStates) {
     const nextMapStateHash = getMapStateHash(nextMapState);
     if (!visited.has(nextMapStateHash)) {
-      visited.set(nextMapStateHash, nextMapState.energy);
+      mutateEnergyToHome(nextMapState);
+      visited.set(nextMapStateHash, nextMapState);
       heap.add(nextMapState);
     } else {
-      const visitedMapStateEnergy = visited.get(nextMapStateHash) as number;
-      if (visitedMapStateEnergy > nextMapState.energy) {
-        visited.set(nextMapStateHash, nextMapState.energy);
+      const visitedMapState = visited.get(nextMapStateHash) as MapState;
+      if (visitedMapState.energy > nextMapState.energy) {
+        mutateEnergyToHome(nextMapState);
+        visited.set(nextMapStateHash, nextMapState);
         heap.add(nextMapState);
       }
     }
   }
 }
 
+console.log(states);
 console.timeEnd("Execution time");
 export {};
